@@ -1,5 +1,6 @@
 package com.pawel.fuse.example.routebuilder;
 
+import org.apache.camel.Exchange;
 import org.apache.camel.spring.SpringRouteBuilder;
 
 /**
@@ -19,6 +20,8 @@ public class ContentBasedRouterRouteBuilder extends SpringRouteBuilder{
                 .when(header("myCommand").isEqualTo("secondCommand"))
                     .log("I am secondCommand")
                     .to("direct:second")
+                .otherwise()
+                    .log("Other or no command")
             .end()
             .log("===")
             .to("mock:finish")
@@ -27,12 +30,16 @@ public class ContentBasedRouterRouteBuilder extends SpringRouteBuilder{
         from("direct:first").routeId("firstRouteId")
             .transform(constant("First Value"))
             .log("My body in first = '${body}'")
+            .setHeader(Exchange.FILE_NAME, constant("first-file.txt"))
+            .to("file://target/first")
             .to("mock:first")
         ;
 
         from("direct:second").routeId("secondRouteId")
             .transform(constant("Second Value"))
             .log("My body in second = '${body}'")
+            .setHeader(Exchange.FILE_NAME, constant("second-file.txt"))
+            .to("file:target/second")
             .to("mock:second")
         ;
     }

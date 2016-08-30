@@ -17,6 +17,13 @@ public class ContentBasedRouterTest extends CamelSpringTestSupport {
         return new ClassPathXmlApplicationContext("META-INF/spring/content-based-router-context.xml");
     }
 
+    public void setUp() throws Exception {
+        System.out.println("clean directories");
+        deleteDirectory("target/first");
+        deleteDirectory("target/second");
+        super.setUp();
+    }
+
     @Test
     public void testMockAllEndpoints() throws Exception {
         //given
@@ -30,14 +37,20 @@ public class ContentBasedRouterTest extends CamelSpringTestSupport {
 
         MockEndpoint mockFinish = getMockEndpoint("mock:finish");
         MockEndpoint mockFirst = getMockEndpoint("mock:first");
+        MockEndpoint mockSecond = getMockEndpoint("mock:second");
         MockEndpoint mockDirectFirst = getMockEndpoint("mock:direct:first");
+        MockEndpoint mockDirectSecond = getMockEndpoint("mock:direct:second");
 
         mockFinish.expectedMessageCount(3);
         mockFinish.expectedBodiesReceived("Funny World", "First Value", "Second Value");
         mockFirst.expectedMessageCount(1);
         mockFirst.expectedBodiesReceived("First Value");
+        mockSecond.expectedMessageCount(1);
+        mockSecond.expectedBodiesReceived("Second Value");
         mockDirectFirst.expectedBodiesReceived("Hello World");
         mockDirectFirst.expectedMessageCount(1);
+        mockDirectSecond.expectedBodiesReceived("Hate World");
+        mockDirectSecond.expectedMessageCount(1);
 
         //when
         template.sendBody("direct:start", "Funny World");
@@ -58,6 +71,8 @@ public class ContentBasedRouterTest extends CamelSpringTestSupport {
         assertNotNull(context.hasEndpoint("mock:direct:start"));
         assertNotNull(context.hasEndpoint("mock:direct:first"));
         assertNotNull(context.hasEndpoint("mock:direct:second"));
+        assertNotNull(context.hasEndpoint("mock:file:target/first"));
+        assertNotNull(context.hasEndpoint("mock:file:target/second"));
     }
 }
 
