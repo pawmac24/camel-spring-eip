@@ -10,11 +10,16 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 /**
  * Created by pmackiewicz on 2016-08-25.
  */
-public class ContentBasedRouterTest extends CamelSpringTestSupport {
+public class MessageFilterRouterTest extends CamelSpringTestSupport {
 
     @Override
     protected AbstractApplicationContext createApplicationContext() {
-        return new ClassPathXmlApplicationContext("META-INF/spring/content-based-router-context.xml");
+        return new ClassPathXmlApplicationContext("META-INF/spring/message-filter-router-context.xml");
+    }
+
+    @Override
+    public boolean isUseAdviceWith() {
+        return true;
     }
 
     @Test
@@ -25,39 +30,38 @@ public class ContentBasedRouterTest extends CamelSpringTestSupport {
             public void configure() throws Exception {
                 // mock all endpoints
                 mockEndpoints();
+                weaveById("givenCommandId").after().to("mock:before");
+                weaveById("finishRouteId").after().to("mock:finish");
             }
         });
 
+        context.start();
+
+        MockEndpoint mockBefore = getMockEndpoint("mock:before");
         MockEndpoint mockFinish = getMockEndpoint("mock:finish");
-        MockEndpoint mockFirst = getMockEndpoint("mock:first");
-        MockEndpoint mockDirectFirst = getMockEndpoint("mock:direct:first");
+
+        mockBefore.expectedMessageCount(5);
+        mockBefore.expectedBodiesReceived("Bad World", "Hello World", "Wonderful World", "Funny World", "Bad World");
 
         mockFinish.expectedMessageCount(3);
-        mockFinish.expectedBodiesReceived("Funny World", "First Value", "Second Value");
-        mockFirst.expectedMessageCount(1);
-        mockFirst.expectedBodiesReceived("First Value");
-        mockDirectFirst.expectedBodiesReceived("Hello World");
-        mockDirectFirst.expectedMessageCount(1);
+        mockFinish.expectedBodiesReceived("Hello World", "Wonderful World", "Funny World");
 
         //when
-        template.sendBody("direct:start", "Funny World");
+        template.sendBody("direct:start", "Bad World");
         template.sendBodyAndHeader("direct:start", "Hello World", "myCommand", "firstCommand");
-        template.sendBodyAndHeader("direct:start", "Hate World", "myCommand", "secondCommand");
+        template.sendBodyAndHeader("direct:start", "Wonderful World", "myCommand", "secondCommand");
+        template.sendBodyAndHeader("direct:start", "Funny World", "myCommand", "secondCommand");
+        template.sendBodyAndHeader("direct:start", "Bad World", "myCommand", "customOperation");
 
         //then
         assertMockEndpointsSatisfied(); //use this for all mock endpoints
 
         // additional test to ensure correct endpoints in registry
         assertNotNull(context.hasEndpoint("direct:start"));
-        assertNotNull(context.hasEndpoint("direct:first"));
-        assertNotNull(context.hasEndpoint("direct:second"));
-        assertNotNull(context.hasEndpoint("mock:first"));
-        assertNotNull(context.hasEndpoint("mock:second"));
-        assertNotNull(context.hasEndpoint("mock:finish"));
         // all the endpoints was mocked
         assertNotNull(context.hasEndpoint("mock:direct:start"));
-        assertNotNull(context.hasEndpoint("mock:direct:first"));
-        assertNotNull(context.hasEndpoint("mock:direct:second"));
+
+        context.stop();
     }
 }
 
