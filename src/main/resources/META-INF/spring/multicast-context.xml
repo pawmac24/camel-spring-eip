@@ -6,10 +6,10 @@
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
-    <bean id="testSupportMockRouteBuilder" class="com.pawel.fuse.example.routebuilder.ContentBasedRouterRouteBuilder"/>
+    <bean id="multicastRouteBuilder" class="com.pawel.fuse.example.routebuilder.MulticastRouteBuilder"/>
 
-    <camelContext id="testSupportMockRouteContext" xmlns="http://camel.apache.org/schema/spring">
-        <routeBuilder ref="testSupportMockRouteBuilder" />
+    <camelContext id="multicastContext" xmlns="http://camel.apache.org/schema/spring">
+        <routeBuilder ref="multicastRouteBuilder" />
     </camelContext>
 
 </beans>
